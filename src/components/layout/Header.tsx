@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Search } from 'lucide-react';
 import { MobileSidebarTrigger } from './Sidebar';
 import { Input } from '@/components/ui/input';
@@ -12,25 +13,34 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { Link } from 'react-router-dom';
 
-export const Header = ({ title }: { title: string }) => {
+export const Header = ({ title,showsidebar=true,showsearch=true }: { title: string,showsidebar?:boolean,showsearch?:boolean }) => {
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('jwt'); // Remove the token from local storage
+    navigate('/login'); // Redirect to the login page
+  };
   return (
     <header className="bg-white border-b p-4 flex justify-between items-center">
       <div className="flex items-center gap-3">
+        {showsidebar && 
         <div className="lg:hidden">
-          <MobileSidebarTrigger />
-        </div>
+          <MobileSidebarTrigger  />
+        </div>}
         <h1 className="text-xl font-semibold">{title}</h1>
       </div>
       
       <div className="flex items-center gap-4">
+        { showsearch &&
         <div className="hidden md:block relative w-64">
+          
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input 
             placeholder="Search..." 
             className="pl-8 bg-gray-50 border-gray-200 focus:bg-white"
           />
-        </div>
+        </div>}
         
         <div className="relative">
           <Bell className="text-gray-500 w-5 h-5 cursor-pointer" />
@@ -50,10 +60,10 @@ export const Header = ({ title }: { title: string }) => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
+            <DropdownMenuItem><Link to="/profile">Profile</Link></DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem><button onClick={handleLogout}>Logout</button></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

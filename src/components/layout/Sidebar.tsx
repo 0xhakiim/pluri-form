@@ -21,32 +21,35 @@ import {
 
 export const AppSidebar = () => {
   const location = useLocation();
-  
+  const onLogout = () => {
+    localStorage.removeItem('jwt'); // Remove the token from local storage
+    window.location.href = '/login'; // Redirect to the login page
+  };
   const menuItems = [
     { 
       icon: BarChart3, 
       label: 'Dashboard', 
-      path: '/dashboard' 
+      path: '/admin/dashboard' 
     },
     { 
       icon: Users, 
       label: 'Teachers', 
-      path: '/teachers' 
+      path: '/admin/teachers' 
     },
     { 
       icon: GiftIcon, 
       label: 'Wishes', 
-      path: '/wishes' 
+      path: '/admin/wishes' 
     },
     { 
       icon: BookOpen, 
       label: 'Courses', 
-      path: '/courses' 
+      path: '/admin/courses' 
     },
     { 
       icon: Settings, 
       label: 'Settings', 
-      path: '/settings' 
+      path: '/admin/settings' 
     },
   ];
   
@@ -82,7 +85,7 @@ export const AppSidebar = () => {
       <SidebarFooter className="px-3 py-4">
         <div className="sidebar-item text-gray-200 hover:bg-sidebar-accent/50 cursor-pointer">
           <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <span onClick={onLogout} >Logout</span>
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -91,7 +94,7 @@ export const AppSidebar = () => {
 
 export const MobileSidebarTrigger = () => {
   return (
-    <SidebarTrigger>
+    <SidebarTrigger >
       <Menu className="w-6 h-6" />
     </SidebarTrigger>
   );

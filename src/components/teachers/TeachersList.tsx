@@ -25,7 +25,26 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { teachers, Teacher } from '@/lib/data';
+import { useEffect } from 'react';
+import axios from 'axios';
 
+interface Teacher {
+  id?: number;
+  userId: number;
+  fname: string;
+  lname: string;
+  rank: string;
+  officeNumber: string;
+  departmentName: string;
+  officeNumber: string;
+  email?: string;
+  }
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  }
 export const TeachersList = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,25 +52,41 @@ export const TeachersList = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [teachersList, setTeachersList] = useState(teachers);
+  const [teachersList, setTeachersList] = useState<Teacher[]>([]);
   const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
   
+  useEffect(() => {
+    const fetchTeachers = async () => {
+    try{
+    const response= await axios.get<Teacher[]>('http://localhost:8080/api/teachers');
+    const teachers= await Promise.all(response.data.map(async (teacher) => {const userres=await axios.get<User>('http://localhost:8080/api/users/'+teacher.userId);
+      return {...teacher, email: userres.data.email};
+      }));
+      setTeachersList(teachers);
+    }catch (error) {
+      console.error(error);
+    }
+    };
+    fetchTeachers();
+},[]);
+    
   // Form state
   const [newTeacherName, setNewTeacherName] = useState('');
   const [newTeacherEmail, setNewTeacherEmail] = useState('');
-  const [newTeacherSubject, setNewTeacherSubject] = useState('');
+  const [newTeacherRank, setNewTeacherRank] = useState('');
   const [newTeacherDepartment, setNewTeacherDepartment] = useState('');
+  const [newTeacherOfficeNumber, setNewTeacherOfficeNumber] = useState('');
   
-  const filteredTeachers = teachersList.filter(teacher => {
+const filteredTeachers = teachersList.filter(teacher => {
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         teacher.subject.toLowerCase().includes(searchTerm.toLowerCase());
+                         teacher.rank.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filter === 'all') return matchesSearch;
-    return matchesSearch && teacher.department === filter;
+    return matchesSearch && teacher.departmentName === filter;
   });
 
-  const departments = [...new Set(teachersList.map(teacher => teacher.department))];
+  const departments = [...new Set(teachersList.map(teacher => teacher.departmentName))];
   
   const handleAddTeacher = () => {
     if (newTeacherName.trim() === '' || newTeacherEmail.trim() === '') {
@@ -67,13 +102,10 @@ export const TeachersList = () => {
       id: teachersList.length > 0 ? Math.max(...teachersList.map(t => t.id)) + 1 : 1,
       name: newTeacherName,
       email: newTeacherEmail,
-      subject: newTeacherSubject,
-      department: newTeacherDepartment,
+      rank: newTeacherRank,
+      departmentName: newTeacherDepartment,
+      officeNumber: newTeacherOfficeNumber,
       avatar: "/placeholder.svg",
-      joinDate: new Date().toISOString().split('T')[0],
-      wishesCount: 0,
-      completedWishesCount: 0,
-      courses: []
     };
 
     setTeachersList([...teachersList, newTeacher]);
@@ -104,7 +136,7 @@ export const TeachersList = () => {
             ...teacher, 
             name: newTeacherName, 
             email: newTeacherEmail,
-            subject: newTeacherSubject,
+            rank: newTeacherRank,
             department: newTeacherDepartment 
           } 
         : teacher
@@ -136,7 +168,7 @@ export const TeachersList = () => {
   const resetForm = () => {
     setNewTeacherName('');
     setNewTeacherEmail('');
-    setNewTeacherSubject('');
+    setNewTeacherRank('');
     setNewTeacherDepartment('');
     setCurrentTeacher(null);
   };
@@ -189,9 +221,9 @@ export const TeachersList = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Teacher</TableHead>
-              <TableHead>Subject</TableHead>
+              <TableHead>rank</TableHead>
               <TableHead>Department</TableHead>
-              <TableHead>Wishes</TableHead>
+              <TableHead>Office Number</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -214,17 +246,11 @@ export const TeachersList = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{teacher.subject}</TableCell>
+                  <TableCell>{teacher.rank}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{teacher.department}</Badge>
+                    <Badge variant="outline">{teacher.departmentName}</Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium">{teacher.completedWishesCount}</span>
-                      <span className="text-gray-500">/</span>
-                      <span className="text-sm text-gray-500">{teacher.wishesCount}</span>
-                    </div>
-                  </TableCell>
+                  <TableCell>{teacher.officeNumber}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Button 
@@ -234,8 +260,9 @@ export const TeachersList = () => {
                           setCurrentTeacher(teacher);
                           setNewTeacherName(teacher.name);
                           setNewTeacherEmail(teacher.email);
-                          setNewTeacherSubject(teacher.subject);
-                          setNewTeacherDepartment(teacher.department);
+                          setNewTeacherRank(teacher.rank);
+                          setNewTeacherDepartment(teacher.departmentName);
+                          setNewTeacherOfficeNumber(teacher.officeNumber);
                           setIsEditDialogOpen(true);
                         }}
                       >
@@ -302,14 +329,14 @@ export const TeachersList = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2" htmlFor="teacher-subject">
-                Subject
+              <label className="block text-sm font-medium mb-2" htmlFor="teacher-rank">
+                rank
               </label>
               <Input
-                id="teacher-subject"
-                value={newTeacherSubject}
-                onChange={(e) => setNewTeacherSubject(e.target.value)}
-                placeholder="Enter subject"
+                id="teacher-rank"
+                value={newTeacherRank}
+                onChange={(e) => setNewTeacherRank(e.target.value)}
+                placeholder="Enter Rank"
               />
             </div>
             <div>
@@ -321,6 +348,17 @@ export const TeachersList = () => {
                 value={newTeacherDepartment}
                 onChange={(e) => setNewTeacherDepartment(e.target.value)}
                 placeholder="Enter department"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" htmlFor="teacher-office-number">
+                Office Number
+              </label>
+              <Input
+                id="teacher-office-number"
+                value={newTeacherOfficeNumber}
+                onChange={(e) => setNewTeacherOfficeNumber(e.target.value)}
+                placeholder="Enter office number"
               />
             </div>
           </div>
@@ -369,14 +407,14 @@ export const TeachersList = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2" htmlFor="edit-teacher-subject">
-                Subject
+              <label className="block text-sm font-medium mb-2" htmlFor="edit-teacher-rank">
+                Rank
               </label>
               <Input
-                id="edit-teacher-subject"
-                value={newTeacherSubject}
-                onChange={(e) => setNewTeacherSubject(e.target.value)}
-                placeholder="Enter subject"
+                id="edit-teacher-rank"
+                value={newTeacherRank}
+                onChange={(e) => setNewTeacherRank(e.target.value)}
+                placeholder="Enter rank"
               />
             </div>
             <div>
